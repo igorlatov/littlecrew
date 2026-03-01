@@ -1,53 +1,71 @@
 import Link from "next/link";
 
+const agents = [
+  {
+    key: "lexi",
+    name: "Lexi",
+    subtitle: "Fashion & Story Companion",
+    emoji: "✨",
+    avatarBg: "bg-gradient-to-br from-rose-400 to-fuchsia-500",
+    accentColor: "text-rose-500",
+    kidName: "Emma",
+  },
+  {
+    key: "kate",
+    name: "Kate",
+    subtitle: "Fishing & Mechanics Companion",
+    emoji: "🎣",
+    avatarBg: "bg-gradient-to-br from-teal-400 to-blue-500",
+    accentColor: "text-teal-500",
+    kidName: "Erik",
+  },
+];
+
 export default function AppHome() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6">
-      <div className="max-w-4xl w-full space-y-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Choose Your Companion
-        </h1>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Lexi - Emma's companion */}
-          <Link
-            href="/app/lexi"
-            className="group block p-8 bg-gradient-to-br from-purple-900/50 to-pink-900/50 hover:from-purple-800/60 hover:to-pink-800/60 rounded-3xl border-2 border-purple-500/30 hover:border-purple-400/50 transition-all"
-          >
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-24 h-24 bg-purple-500 rounded-full flex items-center justify-center text-4xl">
-                👗
-              </div>
-              <h2 className="text-3xl font-bold text-purple-300">Lexi</h2>
-              <p className="text-slate-300 text-lg">
-                Creative companion for Emma
-              </p>
-              <p className="text-sm text-slate-400">
-                Fashion, stories, and fun ideas!
-              </p>
-            </div>
-          </Link>
-
-          {/* Kate - Erik's companion */}
-          <Link
-            href="/app/kate"
-            className="group block p-8 bg-gradient-to-br from-blue-900/50 to-cyan-900/50 hover:from-blue-800/60 hover:to-cyan-800/60 rounded-3xl border-2 border-blue-500/30 hover:border-blue-400/50 transition-all"
-          >
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-4xl">
-                🎮
-              </div>
-              <h2 className="text-3xl font-bold text-blue-300">Kate</h2>
-              <p className="text-slate-300 text-lg">
-                Creative companion for Erik
-              </p>
-              <p className="text-sm text-slate-400">
-                Games, systems, and how things work!
-              </p>
-            </div>
-          </Link>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center justify-center p-6">
+      <div className="text-center mb-12">
+        <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-100 mb-6">
+          <span className="text-lg">🚀</span>
+          <span className="text-sm font-medium text-gray-500 tracking-wide">LITTLECREW</span>
         </div>
+        <h1
+          className="text-3xl font-bold text-gray-900 mb-3"
+          style={{ fontFamily: "'Nunito', sans-serif" }}
+        >
+          Who&apos;s building today?
+        </h1>
+        <p className="text-gray-500 text-lg">Pick your companion to get started</p>
       </div>
-    </main>
+
+      <div className="flex gap-6 flex-wrap justify-center">
+        {agents.map((agent) => (
+          <Link
+            key={agent.key}
+            href={`/app/${agent.key}`}
+            className="group w-52 bg-white rounded-3xl p-6 shadow-sm border-2 border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300 active:scale-95 flex flex-col items-center gap-4"
+            style={{ minHeight: "220px" }}
+          >
+            <div
+              className={`w-20 h-20 ${agent.avatarBg} rounded-3xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}
+            >
+              {agent.emoji}
+            </div>
+            <div className="text-center">
+              <h2
+                className="text-xl font-bold text-gray-900"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {agent.name}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">{agent.subtitle}</p>
+              <p className={`text-xs ${agent.accentColor} font-semibold mt-2`}>
+                {agent.kidName}&apos;s companion
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
