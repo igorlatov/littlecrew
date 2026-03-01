@@ -445,17 +445,21 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
               disabled={isLoading}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 relative ${
                 isRecording
-                  ? `${agent.buttonBg} text-white scale-110 shadow-lg`
+                  ? "bg-red-500 hover:bg-red-600 text-white scale-110 shadow-lg"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"
               } disabled:opacity-50`}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-              </svg>
+              {isRecording ? (
+                <div className="w-5 h-5 rounded-sm bg-white" />
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+              )}
               {isRecording && (
-                <span className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-current" />
+                <span className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-red-500" />
               )}
             </button>
 
@@ -489,13 +493,13 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
           </div>
 
           {isRecording && (
-            <div className={`mt-3 flex items-center gap-3 ${agent.bubbleColor} rounded-2xl px-4 py-3`}>
-              <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm text-gray-600 font-medium">Listening... speak your message</span>
-              <button onClick={toggleVoiceRecording} className="ml-auto text-xs text-gray-500 font-medium hover:text-gray-700">
-                Cancel
-              </button>
-            </div>
+            <button 
+              onClick={toggleVoiceRecording}
+              className={`mt-3 w-full flex items-center justify-center gap-3 ${agent.buttonBg} text-white rounded-2xl px-4 py-4 active:scale-95 transition-all`}
+            >
+              <div className="w-4 h-4 rounded-sm bg-white animate-pulse" />
+              <span className="text-base font-semibold">Tap to stop listening</span>
+            </button>
           )}
         </div>
       </div>
