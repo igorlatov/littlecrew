@@ -43,6 +43,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   time?: string;
+  image?: string; // base64 or URL
 }
 
 interface ChatInterfaceProps {
@@ -98,7 +99,10 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/history/${agentId}`)
@@ -118,20 +122,118 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = "en-US";
+
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = "";
+          let finalTranscript = "";
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          if (finalTranscript) {
+            setInput(finalTranscript);
+            setIsRecording(false);
+          } else if (interimTranscript) {
+            setInput(interimTranscript);
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech recognition error:", event.error);
+          setIsRecording(false);
+          if (event.error === "not-allowed") {
+            alert("Microphone permission denied. Please allow access in your browser settings.");
+          } else if (event.error === "no-speech") {
+            // Silent timeout, just stop recording
+          } else {
+            alert(`Voice recognition error: ${event.error}`);
+          }
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsRecording(false);
+        };
+      }
+    }
+  }, []);
+
+  const toggleVoiceRecording = () => {
+    if (!recognitionRef.current) {
+      alert("Voice input is not supported on this device.");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      setIsRecording(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setSelectedImage(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !selectedImage) || isLoading) return;
 
     const userMessage = input.trim();
+    const imageToSend = selectedImage;
     const now = formatTime(new Date());
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage, time: now }]);
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    
+    setMessages((prev) => [...prev, { role: "user", content: userMessage || "", time: now, image: imageToSend || undefined }]);
     setIsLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/api/chat/${agentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ 
+          message: userMessage || (imageToSend ? "What do you think of this?" : ""), 
+          image: imageToSend 
+        }),
       });
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -266,7 +368,17 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
                         : `${agent.bubbleColor} text-gray-800 rounded-2xl rounded-bl-md`
                     } px-4 py-3 shadow-sm`}
                   >
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    {msg.image && (
+                      <img 
+                        src={msg.image} 
+                        alt="Uploaded" 
+                        className="rounded-xl mb-2 max-w-full h-auto"
+                        style={{ maxHeight: "300px" }}
+                      />
+                    )}
+                    {msg.content && (
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    )}
                     {msg.time && (
                       <p className={`text-[11px] mt-1.5 ${isUser ? "text-gray-400" : "text-gray-500"} text-right`}>
                         {msg.time}
@@ -283,9 +395,43 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
 
         {/* Input area */}
         <div className="border-t border-gray-100 bg-white px-4 py-3 pb-8">
+          {/* Image preview */}
+          {selectedImage && (
+            <div className="mb-3 relative inline-block">
+              <img 
+                src={selectedImage} 
+                alt="Preview" 
+                className="rounded-xl max-h-32 border-2 border-gray-200"
+              />
+              <button
+                onClick={removeSelectedImage}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 active:scale-95"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+
             {/* Image button */}
-            <button className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95 transition-all duration-200">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95 transition-all duration-200 disabled:opacity-50"
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
@@ -295,12 +441,13 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
 
             {/* Voice button */}
             <button
-              onClick={() => setIsRecording(!isRecording)}
+              onClick={toggleVoiceRecording}
+              disabled={isLoading}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 relative ${
                 isRecording
                   ? `${agent.buttonBg} text-white scale-110 shadow-lg`
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"
-              }`}
+              } disabled:opacity-50`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
@@ -328,9 +475,9 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
             {/* Send button */}
             <button
               onClick={sendMessage}
-              disabled={!input.trim() || isLoading || messageCount >= 50}
+              disabled={(!input.trim() && !selectedImage) || isLoading || messageCount >= 50}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                input.trim()
+                (input.trim() || selectedImage)
                   ? `${agent.buttonBg} text-white shadow-lg active:scale-95`
                   : "bg-gray-100 text-gray-300"
               }`}
@@ -345,7 +492,7 @@ export default function ChatInterface({ agentId }: ChatInterfaceProps) {
             <div className={`mt-3 flex items-center gap-3 ${agent.bubbleColor} rounded-2xl px-4 py-3`}>
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
               <span className="text-sm text-gray-600 font-medium">Listening... speak your message</span>
-              <button onClick={() => setIsRecording(false)} className="ml-auto text-xs text-gray-500 font-medium hover:text-gray-700">
+              <button onClick={toggleVoiceRecording} className="ml-auto text-xs text-gray-500 font-medium hover:text-gray-700">
                 Cancel
               </button>
             </div>
