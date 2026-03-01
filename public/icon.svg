@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#1e293b" rx="64"/>
+  
+  <!-- Top circle (Lexi - purple) -->
+  <circle cx="200" cy="200" r="80" fill="#a855f7"/>
+  <text x="200" y="230" font-size="64" text-anchor="middle" fill="white">👗</text>
+  
+  <!-- Bottom circle (Kate - blue) -->
+  <circle cx="312" cy="312" r="80" fill="#3b82f6"/>
+  <text x="312" y="342" font-size="64" text-anchor="middle" fill="white">🎮</text>
+</svg>
