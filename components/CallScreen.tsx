@@ -135,10 +135,17 @@ VOICE CALL RULES:
 ${memory.summary ? `WHAT YOU REMEMBER:\n${memory.summary}\n` : ""}
 `;
 
-      // Start the conversation with system prompt override
+      // Get signed URL from backend
+      const signedUrlRes = await fetch(`${API_URL}/api/voice/signed-url/${agentId}`);
+      const signedUrlData = await signedUrlRes.json();
+      
+      if (!signedUrlData.signedUrl) {
+        throw new Error("Failed to get signed URL");
+      }
+
+      // Start the conversation with signed URL
       await conversation.startSession({
-        agentId: elevenLabsAgentId || "",
-        connectionType: "websocket" as const,
+        signedUrl: signedUrlData.signedUrl,
       });
     } catch (error: any) {
       console.error("[CALL] Start failed:", error);
