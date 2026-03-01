@@ -22,7 +22,7 @@ const AGENTS = {
     kidName: "Emma",
   },
   kate: {
-    name: "Kate",
+    name: "Kuzya",
     subtitle: "Fishing & Mechanics Companion",
     emoji: "🎣",
     gradient: "from-teal-400 via-cyan-400 to-blue-500",

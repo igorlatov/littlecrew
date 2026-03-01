@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Kate - LittleCrew",
+  title: "Kuzya - LittleCrew",
   description: "Erik's Fishing & Mechanics Companion",
   manifest: "/manifest-kate.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Kate",
+    title: "Kuzya",
   },
 };
 

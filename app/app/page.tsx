@@ -12,7 +12,7 @@ const agents = [
   },
   {
     key: "kate",
-    name: "Kate",
+    name: "Kuzya",
     subtitle: "Fishing & Mechanics Companion",
     emoji: "🎣",
     avatarBg: "bg-gradient-to-br from-teal-400 to-blue-500",
